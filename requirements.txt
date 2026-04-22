@@ -1,0 +1,4 @@
+alpaca-py
+yfinance
+python-dotenv
+numpy
