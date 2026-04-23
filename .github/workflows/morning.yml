@@ -3,8 +3,10 @@ name: Bot Morning
 on:
   workflow_dispatch:
   schedule:
-    # 9:35 AM ET during daylight saving time (EDT = UTC-4)
-    - cron: "35 13 * * 1-5"
+    # Every 5 minutes from 9:35 AM to 12:25 PM ET (EDT)
+    - cron: "35,40,45,50,55 13 * * 1-5"
+    - cron: "*/5 14-15 * * 1-5"
+    - cron: "0,5,10,15,20,25 16 * * 1-5"
 
 concurrency:
   group: bot-morning
