@@ -1,0 +1,33 @@
+name: Bot Morning
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 9:35 AM ET during daylight saving time (EDT = UTC-4)
+    - cron: "35 13 * * 1-5"
+
+concurrency:
+  group: bot-morning
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+      ALPACA_PAPER: ${{ vars.ALPACA_PAPER }}
+      STOP_LOSS_PCT: ${{ vars.STOP_LOSS_PCT }}
+      TAKE_PROFIT_PCT: ${{ vars.TAKE_PROFIT_PCT }}
+      FAKE_BUY_SELL: ${{ vars.FAKE_BUY_SELL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run morning mode
+        run: python main.py morning
