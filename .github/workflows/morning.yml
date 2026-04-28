@@ -1,35 +1,35 @@
-name: Bot Morning
+# name: Bot Morning
 
-on:
-  workflow_dispatch:
-  schedule:
-    # Every 5 minutes from 9:35 AM to 12:25 PM ET (EDT)
-    - cron: "35,40,45,50,55 13 * * 1-5"
-    - cron: "*/5 14-15 * * 1-5"
-    - cron: "0,5,10,15,20,25 16 * * 1-5"
+# on:
+#   workflow_dispatch:
+#   schedule:
+#     # Every 5 minutes from 9:35 AM to 12:25 PM ET (EDT)
+#     - cron: "35,40,45,50,55 13 * * 1-5"
+#     - cron: "*/5 14-15 * * 1-5"
+#     - cron: "0,5,10,15,20,25 16 * * 1-5"
 
-concurrency:
-  group: bot-morning
-  cancel-in-progress: false
+# concurrency:
+#   group: bot-morning
+#   cancel-in-progress: false
 
-jobs:
-  run:
-    runs-on: ubuntu-latest
-    env:
-      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-      ALPACA_PAPER: ${{ vars.ALPACA_PAPER }}
-      STOP_LOSS_PCT: ${{ vars.STOP_LOSS_PCT }}
-      TAKE_PROFIT_PCT: ${{ vars.TAKE_PROFIT_PCT }}
-      FAKE_BUY_SELL: ${{ vars.FAKE_BUY_SELL }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      - name: Run morning mode
-        run: python main.py morning
+# jobs:
+#   run:
+#     runs-on: ubuntu-latest
+#     env:
+#       ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+#       ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+#       ALPACA_PAPER: ${{ vars.ALPACA_PAPER }}
+#       STOP_LOSS_PCT: ${{ vars.STOP_LOSS_PCT }}
+#       TAKE_PROFIT_PCT: ${{ vars.TAKE_PROFIT_PCT }}
+#       FAKE_BUY_SELL: ${{ vars.FAKE_BUY_SELL }}
+#     steps:
+#       - uses: actions/checkout@v5
+#       - uses: actions/setup-python@v6
+#         with:
+#           python-version: "3.11"
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+#       - name: Run morning mode
+#         run: python main.py morning
