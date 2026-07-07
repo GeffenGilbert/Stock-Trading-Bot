@@ -18,7 +18,7 @@ load_dotenv()
 
 def get_strategy_config():
     return {
-        "stop_loss_pct": float(os.getenv("STOP_LOSS_PCT", "1.5")),
+        "stop_loss_pct": float(os.getenv("STOP_LOSS_PCT", "1")),
         "take_profit_pct": float(os.getenv("TAKE_PROFIT_PCT", "2")),
         "fake_buy_sell": os.getenv("FAKE_BUY_SELL", "false").lower() == "true",
     }
@@ -125,7 +125,28 @@ def get_open_sell_order_symbols():
     symbols = set()
     for order in open_orders:
         side = str(getattr(order, "side", "")).lower()
+        order_type = str(getattr(order, "type", "")).lower()
         if "sell" not in side:
+            continue
+        if order_type == "trailing_stop" or "trailing" in order_type:
+            continue
+        symbol = getattr(order, "symbol", None)
+        if symbol:
+            symbols.add(symbol)
+    return symbols
+
+def get_open_trailing_stop_symbols():
+    client = get_alpaca_client()
+    request = GetOrdersRequest(status=QueryOrderStatus.OPEN)
+    open_orders = client.get_orders(filter=request)
+
+    symbols = set()
+    for order in open_orders:
+        side = str(getattr(order, "side", "")).lower()
+        order_type = str(getattr(order, "type", "")).lower()
+        if "sell" not in side:
+            continue
+        if order_type != "trailing_stop" and "trailing" not in order_type:
             continue
         symbol = getattr(order, "symbol", None)
         if symbol:
@@ -153,7 +174,7 @@ def place_trailing_stop_order(symbol, qty):
     print(f"Placed trailing stop for {symbol}: qty={qty}, trail={stop_loss_pct}%")
 
 def ensure_trailing_stops(positions):
-    open_sell_symbols = get_open_sell_order_symbols()
+    open_trailing_stop_symbols = get_open_trailing_stop_symbols()
 
     for position in positions:
         symbol = position.get("symbol")
@@ -162,7 +183,7 @@ def ensure_trailing_stops(positions):
         if not symbol or qty is None or qty <= 0:
             continue
 
-        if symbol in open_sell_symbols:
+        if symbol in open_trailing_stop_symbols:
             print(f"Skipping {symbol}: open sell order already exists")
             continue
 
@@ -203,32 +224,36 @@ def get_current_prices(positions=None): # vetted
     return prices
 
 def get_recent_hour_bars(symbol: str): # vetted
-	"""
-	Fetch the 5 most recent hourly bars for a given symbol using Yahoo Finance.
-	Note: Yahoo Finance data is delayed and not suitable for real-time trading.
-	"""
-	numberOfBars = 7 # including the current one
-	now = datetime.datetime.now()
-	start = now - datetime.timedelta(hours=numberOfBars)
+    """
+    Fetch the 5 most recent hourly bars for a given symbol using Yahoo Finance.
+    Note: Yahoo Finance data is delayed and not suitable for real-time trading.
+    """
+    numberOfBars = 7 # including the current one
+    market_tz = ZoneInfo("America/New_York")
+    now = datetime.datetime.now(market_tz)
+    start = now - datetime.timedelta(hours=numberOfBars)
+    end = now + datetime.timedelta(hours=1)
 	# Pass datetime objects directly to avoid string parsing issues.
-	df = yf.download(
+    df = yf.download(
 		tickers=symbol,
 		interval="60m",
 		start=start,
-		end=now,
+		end=end,
 		progress=False
 	)
 	# Get the last 5 bars (including the current hour, even if incomplete)
-	return df.tail(numberOfBars)
+    return df.tail(numberOfBars)
 
 def get_recent_hour_bars_batch(symbols, number_of_bars=7, batch_size=100, pause_seconds=0.35): # vetted
     """
     Fetch recent hourly bars for many symbols in batches to reduce request count.
     Returns: dict[symbol] -> DataFrame with that symbol's bars.
     """
-    now = datetime.datetime.now()
+    market_tz = ZoneInfo("America/New_York")
+    now = datetime.datetime.now(market_tz)
     # now = datetime.datetime(2026, 3, 24, 16, 0, 0, tzinfo=ZoneInfo("America/New_York"))
     start = now - datetime.timedelta(hours=number_of_bars)
+    end = now + datetime.timedelta(hours=1)
     bars_by_symbol = {}
 
     for i in range(0, len(symbols), batch_size):
@@ -239,7 +264,7 @@ def get_recent_hour_bars_batch(symbols, number_of_bars=7, batch_size=100, pause_
             tickers=tickers_arg,
             interval="60m",
             start=start,
-            end=now,
+            end=end,
             progress=False,
             group_by="ticker",
             threads=False,
@@ -377,22 +402,54 @@ def check_buy(symbol, bars): # vetted-ish
         {"x": -6.952, "y": -51.915}, 
         {"x": -24.515, "y": -67.248}
     ]
+
     good_values = point_in_polygon(vol_vel, vol_acc, polygon_selector)
+
+    print(
+        f"{symbol}: vol_vel={vol_vel:.4f}, "
+        f"vol_acc={vol_acc:.4f}, buy_signal={good_values}"
+    )
+
     if good_values:
         print("Volume Velocity:", vol_vel)
         print("Volume Acceleration:", vol_acc)
         buy(symbol)
 
 def check_all_buy(symbols): # vetted-ish
+    print(f"Starting check_all_buy with {len(symbols)} symbols")
+
     bars_by_symbol = get_recent_hour_bars_batch(symbols)
+
+    print(f"Bars returned for {len(bars_by_symbol)} symbols")
+
+    total = len(symbols)
+    too_few_bars = 0
+    checked = 0
+
     for symbol in symbols:
         bars = bars_by_symbol.get(symbol)
         if bars is None or len(bars) < 7:
-            print(f"Skipping {symbol}: fewer than 7 recent bars returned")
-            continue # talk to newt about if this is ok (error handling in general)
-        check_buy(symbol, bars)
+            times = [
+                (dt.replace(tzinfo=ZoneInfo("UTC")) if dt.tzinfo is None else dt)
+                .astimezone(ZoneInfo("America/New_York"))
+                .strftime("%I:%M").lstrip("0")
+                for dt in bars.index
+            ]
+            expected_times = ['9:30', '10:30', '11:30', '12:30', '1:30', '2:30', '3:30']
+            missing_times = [t for t in expected_times if t not in times]
+            print(f"Skipping {symbol}: fewer than 7 recent bars returned: {missing_times}")
+            too_few_bars += 1
+            continue
 
-# stock market closes at 4pm EST, I would like this to finish running as close to that time as possible, so run 3:58pm EST
+        check_buy(symbol, bars)
+        checked += 1
+    
+    print(
+        f"Night summary: total={total}, "
+        f"too_few_bars={too_few_bars}, checked={checked}, "
+    )
+
+# stock market closes at 4pm EST, I would like this to finish running as close to that time as possible, so run 3:57pm EST
 def run_at_night():
     market_tz = ZoneInfo("America/New_York")
     print(f"Running at night, time: {datetime.datetime.now(market_tz)}")
@@ -405,7 +462,16 @@ def run_at_night():
         return
 
     symbols = get_symbols()
+    print(f"Loaded {len(symbols)} symbols")
+    print(f"First 10 symbols: {symbols[:10]}")
     check_all_buy(symbols)
+
+def cancel_open_orders_for_symbol(client, symbol):
+    request = GetOrdersRequest(status=QueryOrderStatus.OPEN, symbols=[symbol])
+    open_orders = client.get_orders(filter=request)
+    for order in open_orders:
+        client.cancel_order_by_id(order.id)
+        print(f"Cancelled open order {order.id} for {symbol}")
 
 def sell(symbol):
     config = get_strategy_config()
@@ -416,6 +482,8 @@ def sell(symbol):
         return
 
     client = get_alpaca_client()
+    # close_position 403s if an open order (e.g. our trailing stop) already exists for the symbol.
+    cancel_open_orders_for_symbol(client, symbol)
     client.close_position(symbol)
     print(f"Placed sell for {symbol} (close position)")
 
@@ -469,7 +537,7 @@ def sell_all_positions():
         sell(symbol)
         sold_symbols.add(symbol)
 
-def run_in_morning(): # should run right when the market starts at 9:30am EST
+def run_in_morning(): # should run every minute from 9:30am-12:30pm EST
     market_tz = ZoneInfo("America/New_York")
     print(f"Running in the morning, time: {datetime.datetime.now(market_tz)}")
 
@@ -488,25 +556,23 @@ def run_in_morning(): # should run right when the market starts at 9:30am EST
     ensure_trailing_stops(positions)
     check_all_sell(positions)
 
-def wait_until_night_run(hour=15, minute=56):
-    market_tz = ZoneInfo("America/New_York")
-    now_et = datetime.datetime.now(market_tz)
-    target_et = now_et.replace(hour=hour, minute=minute, second=0, microsecond=0)
+def print_open_orders():
+    client = get_alpaca_client()
+    request = GetOrdersRequest(status=QueryOrderStatus.OPEN)
+    open_orders = client.get_orders(filter=request)
 
-    if now_et >= target_et:
-        target_et = target_et + datetime.timedelta(days=1)
-
-    print(f"Waiting to run at {target_et.strftime('%Y-%m-%d %I:%M %p %Z')}")
-
-    while True:
-        now_et = datetime.datetime.now(market_tz)
-        remaining_seconds = (target_et - now_et).total_seconds()
-        if remaining_seconds <= 0:
-            break
-
-        time.sleep(min(60, remaining_seconds))
-
-    print(f"Starting night run at {datetime.datetime.now(market_tz).strftime('%Y-%m-%d %I:%M:%S %p %Z')}")
+    for order in open_orders:
+        print(
+            f"symbol={order.symbol}, "
+            f"side={order.side}, "
+            f"type={order.type}, "
+            f"qty={order.qty}, "
+            f"trail_percent={getattr(order, 'trail_percent', None)}, "
+            f"trail_price={getattr(order, 'trail_price', None)}, "
+            f"hwm={getattr(order, 'hwm', None)}, "
+            f"stop_price={getattr(order, 'stop_price', None)}, "
+            f"status={order.status}"
+        )
 
 import sys
 def main():
@@ -523,11 +589,39 @@ def main():
         sell_all_positions()
     elif mode == "night":
         run_at_night()
+    elif mode == "test":
+        symbols = get_symbols()
+        bars_by_symbol = get_recent_hour_bars_batch(symbols)
+        bars = bars_by_symbol.get("AAPL")
+        print(bars)
+        # for symbol in symbols:
+        #     if (symbol == "AAPL"):
+        #         bars = bars_by_symbol.get(symbol)
+        #         print(bars)
+        #     bars = bars_by_symbol.get(symbol)
+        #     if bars is None or len(bars) < 7:
+        #         print(f"Skipping {symbol}: fewer than 7 recent bars returned")
+        #         continue # talk to newt about if this is ok (error handling in general)
+    elif mode == "data":
+        # symbols = get_symbols()
+        bars = get_recent_hour_bars("AAPL")
+        times = [
+            (dt.replace(tzinfo=ZoneInfo("UTC")) if dt.tzinfo is None else dt)
+            .astimezone(ZoneInfo("America/New_York"))
+            .strftime("%I:%M").lstrip("0")
+            for dt in bars.index
+        ]
+        expected_times = ['9:30', '10:30', '11:30', '12:30', '1:30', '2:30', '3:30']
+        missing_times = [t for t in expected_times if t not in times]
+        print(missing_times)
+    elif mode == "orders":
+        print_open_orders()
     else:
         raise ValueError(f"Unknown mode: {mode}")
+    
 
     elapsed_seconds = time.time() - run_start_time
-    print(f"Total run time: {elapsed_seconds:.2f} seconds")
+    print(f"Total run time: {elapsed_seconds:.2f} seconds. Version 7.")
 
 if __name__ == "__main__":
     main()
@@ -537,3 +631,5 @@ if __name__ == "__main__":
 # To do: 
 # In the beginning of run_in_morning if the market is not open then sell immediately
 # If the next day is one of the few days that open at 12pm then just dont buy today and run it tmrw
+
+# Need to update
