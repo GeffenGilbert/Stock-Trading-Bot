@@ -52,7 +52,27 @@ Known gaps noted inline by the author (see bottom of `main.py`): market-closed h
 
 ## Deployment (Google Cloud)
 
-Runs as a Cloud Run Job (built from the `Dockerfile` in this repo) invoked by Cloud Scheduler, with one scheduled trigger per mode (`morning`, `night`, `liquidate` — likely `run_in_morning` on a minutely schedule 9:30–12:30am ET, `night` around 3:57pm ET). There's no `cloudbuild.yaml` or deploy script checked into the repo, so builds/deploys happen via manual `gcloud` commands (or the console) — check with the user before assuming a specific image name, region, or job name.
+Runs as three separate Cloud Run Jobs (`alpaca-morning-job`, `alpaca-night-job`, `alpaca-liquidate-job`), one per mode, all built from the same image (`Dockerfile` in this repo, tagged `alpaca-bot`) and invoked on their own Cloud Scheduler triggers. There's no `cloudbuild.yaml` checked into the repo — deploys happen by running the commands below manually from the project root (folder containing `main.py`, `Dockerfile`, `requirements.txt`, `symbols.csv`):
+
+```bash
+PROJECT_ID=$(gcloud config get-value project)
+REGION=us-east1
+REPO=alpaca-bot-repo
+IMAGE=alpaca-bot
+
+# Build once, pushes to Artifact Registry
+gcloud builds submit --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE
+
+# Point each job at the new image
+gcloud run jobs update alpaca-morning-job --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE --region $REGION
+gcloud run jobs update alpaca-liquidate-job --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE --region $REGION
+gcloud run jobs update alpaca-night-job --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE --region $REGION
+
+# Optionally run one immediately to verify instead of waiting for its schedule
+gcloud run jobs execute alpaca-morning-job --region $REGION --wait
+```
+
+One `gcloud builds submit` + three `gcloud run jobs update` calls is required any time `main.py`/`Dockerfile`/`requirements.txt`/`symbols.csv` changes — updating the job definition does not rebuild the image, and rebuilding the image does not update the jobs. `project_id`/region here is `us-east1` per the `alpaca-liquidate-job` Cloud Logging entries seen so far; project ID is read dynamically via `gcloud config get-value project` rather than hardcoded.
 
 `ALPACA_API_KEY` / `ALPACA_SECRET_KEY` (and the other `.env` vars) are pulled from Google Secret Manager at runtime rather than from a committed `.env` in production; the local `.env` is only for local runs.
 

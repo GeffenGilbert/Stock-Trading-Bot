@@ -621,7 +621,7 @@ def main():
     
 
     elapsed_seconds = time.time() - run_start_time
-    print(f"Total run time: {elapsed_seconds:.2f} seconds. Version 7.")
+    print(f"Total run time: {elapsed_seconds:.2f} seconds. Version 8.")
 
 if __name__ == "__main__":
     main()
