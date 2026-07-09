@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A single-file automated trading bot (`main.py`) that trades a list of stock symbols (`symbols.csv`) through Alpaca, using Yahoo Finance (`yfinance`) hourly bars to generate buy signals. It's meant to run as three separate scheduled invocations per trading day (morning / night, plus an optional liquidate), likely via cron or a container scheduler — there is no long-running process or web server.
 
+## Git conventions
+
+Commit messages must never include a `Co-Authored-By: Claude ...` trailer.
+
 ## Commands
 
 Run from the project root with the venv active (`.venv` already exists):

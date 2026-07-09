@@ -13,6 +13,7 @@ from alpaca.trading.requests import MarketOrderRequest, GetCalendarRequest, GetO
 from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockLatestTradeRequest
+from polygons import polygons
 
 load_dotenv()
 
@@ -338,7 +339,7 @@ def compute_metrics_from_bars(bars): # vetted
 
     return vel, acc, vol_vel, vol_acc
 
-def point_in_polygon(px, py, polygon): # vetted-ish
+def point_in_single_polygon(px, py, polygon): # vetted-ish
     inside = False
     n = len(polygon)
     for i in range(n):
@@ -352,6 +353,13 @@ def point_in_polygon(px, py, polygon): # vetted-ish
         if intersects:
             inside = not inside
     return inside
+
+def point_in_polygons(px, py, polygons):
+    """
+    True if (px, py) falls inside any polygon in polygons — mirrors
+    pointInPolygon/pointInSinglePolygon in frontend/sketch.js.
+    """
+    return any(point_in_single_polygon(px, py, polygon) for polygon in polygons)
 
 def buy(symbol):
     config = get_strategy_config()
@@ -396,14 +404,8 @@ def buy(symbol):
 
 def check_buy(symbol, bars): # vetted-ish
     vel, acc, vol_vel, vol_acc = compute_metrics_from_bars(bars)
-    polygon_selector = [
-        {"x": -31.240, "y": -114.016}, 
-        {"x": -21.525, "y": -85.649}, 
-        {"x": -6.952, "y": -51.915}, 
-        {"x": -24.515, "y": -67.248}
-    ]
 
-    good_values = point_in_polygon(vol_vel, vol_acc, polygon_selector)
+    good_values = point_in_polygons(vol_vel, vol_acc, polygons)
 
     print(
         f"{symbol}: vol_vel={vol_vel:.4f}, "
