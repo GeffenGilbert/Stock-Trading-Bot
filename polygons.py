@@ -3,8 +3,8 @@
 # visualizer (click to place points, 's' to save/print), then pasted in here
 # by hand. Each entry is one polygon: a list of {"x", "y"} points.
 
-# 1.0% TRAILING STOP LOSS
-# 1.0% TAKE PROFIT
+# 0.4% TRAILING STOP LOSS
+# 2.0% TAKE PROFIT
 polygons = [
   [
     { "x": -39.32593790364584, "y": 19.320905956092247 },
