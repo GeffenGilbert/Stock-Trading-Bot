@@ -430,7 +430,13 @@ def check_all_buy(symbols): # vetted-ish
 
     for symbol in symbols:
         bars = bars_by_symbol.get(symbol)
-        if bars is None or len(bars) < 7:
+
+        if bars is None:
+            print(f"Skipping {symbol}: no bars returned.")
+            too_few_bars += 1
+            continue
+
+        if len(bars) < 7:
             times = [
                 (dt.replace(tzinfo=ZoneInfo("UTC")) if dt.tzinfo is None else dt)
                 .astimezone(ZoneInfo("America/New_York"))
@@ -623,7 +629,7 @@ def main():
     
 
     elapsed_seconds = time.time() - run_start_time
-    print(f"Total run time: {elapsed_seconds:.2f} seconds. Version 8.")
+    print(f"Total run time: {elapsed_seconds:.2f} seconds. Version 9.")
 
 if __name__ == "__main__":
     main()
