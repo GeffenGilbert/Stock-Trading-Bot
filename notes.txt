@@ -2,3 +2,27 @@ This is a notes document to track the progress of this bot on Alpaca
 
 06/09/26
 Starting Money: $102,363.93
+
+Bought 155 IEX at $219.89
+Bought 319 LDOS at $106.98
+
+06/10/26
+Sold 319 LDOS at $106.96
+Sold 155 IEX at $219.525742
+
+06/14/26
+Bought 76 APP at $448.781579
+
+06/15/26
+Sold 76 APP at $454.427369
+Bought 616 PYPL at $55.55
+
+06/16/26
+Sold 616 PYPL at $55.814155
+Bought 1,559 T at $22
+
+06/17/26
+Sold 1,559 T at $22.56 - take profit
+
+06/19/26
+Current Money: 103,765.00
