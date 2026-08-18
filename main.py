@@ -252,7 +252,6 @@ def get_recent_hour_bars_batch(symbols, number_of_bars=7, batch_size=100, pause_
     """
     market_tz = ZoneInfo("America/New_York")
     now = datetime.datetime.now(market_tz)
-    # now = datetime.datetime(2026, 3, 24, 16, 0, 0, tzinfo=ZoneInfo("America/New_York"))
     start = now - datetime.timedelta(hours=number_of_bars)
     end = now + datetime.timedelta(hours=1)
     bars_by_symbol = {}
@@ -329,7 +328,7 @@ def compute_metrics_from_bars(bars): # vetted
     today_close = closes[-1]
     today_volume = volumes[-1]
 
-    if today_close != 0: # should I add some sort of error?
+    if today_close != 0:
         vel = 100 * vel / today_close
         acc = 100 * acc / today_close
 
@@ -339,7 +338,7 @@ def compute_metrics_from_bars(bars): # vetted
 
     return vel, acc, vol_vel, vol_acc
 
-def point_in_single_polygon(px, py, polygon): # vetted-ish
+def point_in_single_polygon(px, py, polygon): # vetted
     inside = False
     n = len(polygon)
     for i in range(n):
@@ -402,7 +401,7 @@ def buy(symbol):
     client.submit_order(order_data=order)
     print(f"Placed buy for {symbol}: qty={qty}, cash=${desired_spend:.2f}, price=${last_price:.2f}")
 
-def check_buy(symbol, bars): # vetted-ish
+def check_buy(symbol, bars): # vetted
     vel, acc, vol_vel, vol_acc = compute_metrics_from_bars(bars)
 
     good_values = point_in_polygons(vol_vel, vol_acc, polygons)
@@ -417,7 +416,7 @@ def check_buy(symbol, bars): # vetted-ish
         print("Volume Acceleration:", vol_acc)
         buy(symbol)
 
-def check_all_buy(symbols): # vetted-ish
+def check_all_buy(symbols): # vetted
     print(f"Starting check_all_buy with {len(symbols)} symbols")
 
     bars_by_symbol = get_recent_hour_bars_batch(symbols)
@@ -490,7 +489,6 @@ def sell(symbol):
         return
 
     client = get_alpaca_client()
-    # close_position 403s if an open order (e.g. our trailing stop) already exists for the symbol.
     cancel_open_orders_for_symbol(client, symbol)
     client.close_position(symbol)
     print(f"Placed sell for {symbol} (close position)")
@@ -602,16 +600,7 @@ def main():
         bars_by_symbol = get_recent_hour_bars_batch(symbols)
         bars = bars_by_symbol.get("AAPL")
         print(bars)
-        # for symbol in symbols:
-        #     if (symbol == "AAPL"):
-        #         bars = bars_by_symbol.get(symbol)
-        #         print(bars)
-        #     bars = bars_by_symbol.get(symbol)
-        #     if bars is None or len(bars) < 7:
-        #         print(f"Skipping {symbol}: fewer than 7 recent bars returned")
-        #         continue # talk to newt about if this is ok (error handling in general)
     elif mode == "data":
-        # symbols = get_symbols()
         bars = get_recent_hour_bars("AAPL")
         times = [
             (dt.replace(tzinfo=ZoneInfo("UTC")) if dt.tzinfo is None else dt)
