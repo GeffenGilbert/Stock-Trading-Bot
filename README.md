@@ -1,4 +1,4 @@
-# finalGraphBot
+# Stock Trading Bot
 
 An automated equity trading bot that scans the S&P 500 for buy signals using a custom-built technical indicator, executes trades through the Alpaca brokerage API, and runs unattended in the cloud on a daily schedule.
 
