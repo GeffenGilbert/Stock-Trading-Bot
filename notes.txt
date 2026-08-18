@@ -1,28 +1,109 @@
-This is a notes document to track the progress of this bot on Alpaca
+This is a notes document to track the progress of this bot paper trading on Alpaca
 
-06/09/26
+07/09/26
 Starting Money: $102,363.93
 
 Bought 155 IEX at $219.89
 Bought 319 LDOS at $106.98
 
-06/10/26
+07/10/26
 Sold 319 LDOS at $106.96
 Sold 155 IEX at $219.525742
 
-06/14/26
+07/14/26
 Bought 76 APP at $448.781579
 
-06/15/26
+07/15/26
 Sold 76 APP at $454.427369
 Bought 616 PYPL at $55.55
 
-06/16/26
+07/16/26
 Sold 616 PYPL at $55.814155
 Bought 1,559 T at $22
 
-06/17/26
+07/17/26
 Sold 1,559 T at $22.56 - take profit
 
-06/19/26
+07/19/26
 Current Money: 103,765.00
+
+07/22/26
+Bought 2,396 F at $14.43
+Bought 355 CHD at $97.16
+
+07/23/26
+Sold 2,396 F at $14.083022
+Sold 355 CHD at $95.778253
+
+07/24/26
+Bought 365 MNST at $93.48
+
+07/27/26
+Sold 365 MNST at $94.48
+Bought 1,521 DOC at $22.53
+Bought 1,108 NWS at $30.929061
+
+07/28/26
+Sold 1,521 DOC at $22.63
+Sold 1,097 NWS at $31.431988 (trailing stop, partial fill)
+Sold 11 NWS at $31.54 (remaining shares, market)
+
+07/29/26
+Bought 250 AWK at $138.07
+Bought 282 XYL at $122.13
+
+07/30/26
+Sold 250 AWK at $137.30544
+Sold 282 XYL at $120.81
+Bought 5 NVR at $6,304.88
+Bought 1,236 SMCI at $27.74
+
+07/31/26
+Sold 5 NVR at $6,162.746
+Sold 1,236 SMCI at $29.161165
+
+08/05/26
+Bought 101 NSC at $341.38
+
+08/06/26
+Sold 101 NSC at $341.812376
+Bought 73 MCO at $472.59
+Bought 86 WAT at $399.967326
+
+08/07/26
+Sold 86 WAT at $395.726861
+Sold 73 MCO at $473.676027
+Bought 502 PNR at $68.90
+Bought 28 SNDK at $1,217.408571
+
+08/10/26
+Sold 28 SNDK at $1,224.858571
+Sold 502 PNR at $67.952211
+Bought 1,097 SMCI at $31.44
+
+08/11/26
+Sold 1,097 SMCI at $31.828623
+Bought 354 INTC at $97.79
+
+08/12/26
+Sold 354 INTC at $102.245085
+Bought 1,078 CMG at $32.61
+
+08/13/26
+Sold 1,078 CMG at $33.13
+Bought 1,194 GEN at $29.60
+
+08/14/26
+Sold 1,194 GEN at $29.539146
+Bought 69 AMAT at $506.821739
+
+08/17/26
+Sold 68 AMAT at $522.394118 (trailing stop, partial fill)
+Sold 1 AMAT at $524.14 (remaining share, market)
+Bought 207 AMT at $172.171159
+
+08/18/26
+Sold 207 AMT at $173.86
+Bought 495 TECH at $72.266787 — currently open (most recent trade, no sell yet)
+
+Current Money: $107,411.20
