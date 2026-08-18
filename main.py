@@ -633,11 +633,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# /Users/geffengilbert/codingProjects/stockStuff/finalGraphBot/.venv/bin/python main.py
-
-# To do: 
-# In the beginning of run_in_morning if the market is not open then sell immediately
-# If the next day is one of the few days that open at 12pm then just dont buy today and run it tmrw
-
-# Need to update
